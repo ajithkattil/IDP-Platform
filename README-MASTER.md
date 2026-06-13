@@ -2,7 +2,7 @@
 
 **Owner:** Ajith Kattil · Platform Engineering  
 **GitLab:** gitlab.com/cltajith  
-**AWS Account:** 501149494381 · Region: us-east-1  
+**AWS Account:** *********** · Region: us-east-1  
 **EKS Cluster:** test-cluster-cicd-deployment  
 **Status:** POC complete — two services live on EKS with AI-powered golden pipeline
 
@@ -64,10 +64,10 @@ GitLab CI/CD (gitlab.com/cltajith)
 | AWS Account | 501149494381 |
 | Region | us-east-1 |
 | EKS Cluster | test-cluster-cicd-deployment |
-| ECR Registry | 501149494381.dkr.ecr.us-east-1.amazonaws.com |
+| ECR Registry | *****************.dkr.ecr.us-east-1.amazonaws.com |
 | ECR Repo (AI) | zayo-poc/zayo-platform-ai |
 | ECR Repo (Orders) | zayo-poc/spring-orders-poc |
-| Terraform State | s3://zayo-poc-tf-state-501149494381-idp |
+| Terraform State | s3://zayo-poc-tf-state-***************-idp |
 | DynamoDB Lock | zayo-poc-tf-locks |
 
 ---
