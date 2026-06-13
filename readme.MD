@@ -11,23 +11,24 @@
 1. [What is the IDP?](#what-is-the-idp)
 2. [Why build it?](#why-build-it)
 3. [Architecture overview](#architecture-overview)
-4. [Tech stack](#tech-stack)
-5. [Repository layout](#repository-layout)
-6. [Prerequisites](#prerequisites)
-7. [Local development setup](#local-development-setup)
-8. [Running Backstage](#running-backstage)
-9. [Configuration](#configuration)
-10. [AWS accounts and access](#aws-accounts-and-access)
-11. [GitLab CI/CD integration](#gitlab-cicd-integration)
-12. [Backstage features in this POC](#backstage-features-in-this-poc)
-13. [Scaffolder templates (golden paths)](#scaffolder-templates-golden-paths)
-14. [Software catalog](#software-catalog)
-15. [TechDocs](#techdocs)
-16. [Search](#search)
-17. [Common troubleshooting](#common-troubleshooting)
-18. [Known issues](#known-issues)
-19. [Roadmap](#roadmap)
-20. [Contributing](#contributing)
+4. [Architecture diagrams & docs](#architecture-diagrams--docs)
+5. [Tech stack](#tech-stack)
+6. [Repository layout](#repository-layout)
+7. [Prerequisites](#prerequisites)
+8. [Local development setup](#local-development-setup)
+9. [Running Backstage](#running-backstage)
+10. [Configuration](#configuration)
+11. [AWS accounts and access](#aws-accounts-and-access)
+12. [GitLab CI/CD integration](#gitlab-cicd-integration)
+13. [Backstage features in this POC](#backstage-features-in-this-poc)
+14. [Scaffolder templates (golden paths)](#scaffolder-templates-golden-paths)
+15. [Software catalog](#software-catalog)
+16. [TechDocs](#techdocs)
+17. [Search](#search)
+18. [Common troubleshooting](#common-troubleshooting)
+19. [Known issues](#known-issues)
+20. [Roadmap](#roadmap)
+21. [Contributing](#contributing)
 
 ---
 
@@ -85,6 +86,22 @@ The portal is built on [Backstage](https://backstage.io), the open-source develo
 2. Scaffolder creates a GitLab repo, pushes a skeleton with `catalog-info.yaml`, `mkdocs.yml`, Dockerfile, and `.gitlab-ci.yml`.
 3. GitLab CI builds, tests, scans, and pushes a container image to AWS ECR (auth via OIDC).
 4. The service auto-registers in the Backstage software catalog and ships with browsable TechDocs.
+
+---
+
+## Architecture diagrams & docs
+
+### Layered architecture
+
+![IDP layered architecture](idp-platform-ai/IDP_Diagram_1_Layers.png)
+
+### End-to-end flow
+
+![IDP end-to-end flow](IDP_Diagram_3_E2E.png)
+
+### Full architecture document
+
+The complete architecture write-up is available as a Word document: [IDP Platform Architecture (.docx)](Idp_IDP_Platform_architecture.docx). GitHub renders a preview of `.docx` files when opened in the repo browser; click **Download** there to get a local copy.
 
 ---
 

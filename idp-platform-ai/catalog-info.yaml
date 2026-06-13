@@ -1,0 +1,43 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: idp-platform-ai
+  title: Idp Platform AI
+  description: >
+    AI backbone of the Idp Internal Developer Platform.
+    Powers the DevPortal AI Copilot, security analysis (Phase 3 Security Agent foundation),
+    and service DoD gap analysis. Built on Claude Sonnet 4 via Anthropic SDK.
+  annotations:
+    gitlab.com/project-slug: "idp-group/devops/idp-platform/idp-platform-ai"
+    datadoghq.com/service-name: "idp-platform-ai"
+    argocd/app-name: "idp-platform-ai"
+    pagerduty.com/service-id: "P0PLATFORM"
+    backstage.io/techdocs-ref: "dir:."
+    backstage.io/source-location: "url:https://gitlab.com/idp/platform/idp-platform-ai"
+  tags:
+    - python
+    - fastapi
+    - ai
+    - platform
+    - eks
+    - tier-1
+  links:
+    - url: "https://devportal.internal.idp.com/catalog/default/component/idp-platform-ai"
+      title: "DevPortal"
+      icon: "dashboard"
+    - url: "http://idp-platform-ai.internal.idp.com/docs"
+      title: "API Docs"
+      icon: "docs"
+    - url: "https://app.datadoghq.com/apm/services/idp-platform-ai"
+      title: "Datadog APM"
+      icon: "monitoring"
+
+spec:
+  type: service
+  lifecycle: production
+  owner: "group:platform-engineering"
+  system: "developer-platform"
+  domain: "platform"
+  tier: 1
+  providesApis:
+    - "api:default/platform-ai-api-v1"

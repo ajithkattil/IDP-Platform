@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Zayo IDP POC - Daily Startup Script
+# Idp IDP POC - Daily Startup Script
 # Run this every time you resume the POC
 #
 # What this does:
@@ -18,11 +18,11 @@
 set -u  # treat unset vars as errors (but NOT -e, so we continue past failures)
 
 # --- Paths ---
-BACKSTAGE_DIR="$HOME/Desktop/code/ZAYO/POC/backstage"
-DEVPORTAL_DIR="$HOME/Desktop/code/ZAYO/POC/zayo-devportal"
+BACKSTAGE_DIR="$HOME/Desktop/code/IDP/POC/backstage"
+DEVPORTAL_DIR="$HOME/Desktop/code/IDP/POC/idp-devportal"
 
 # --- AWS config ---
-AWS_PROFILE="idp_dev_pwruser_ps-501149494381"
+AWS_PROFILE="idp_dev_pwruser_ps-123456789012"
 
 # --- GitLab token (required by Backstage scaffolder to create repos) ---
 # Set this in your shell rc (~/.zshrc or ~/.bashrc) so it persists:
@@ -58,7 +58,7 @@ else
   echo "   GitLab user: $GL_USER"
 fi
 
-echo "🚀 Starting Zayo IDP POC..."
+echo "🚀 Starting Idp IDP POC..."
 
 # ============================================================
 # STEP 0 - Pre-flight port check
@@ -70,7 +70,7 @@ echo "🚀 Starting Zayo IDP POC..."
 #   3000 → Backstage frontend (local yarn start)
 #   5173 → DevPortal Vite (started in separate tab — checked, not bound)
 #   7007 → Backstage backend (local yarn start)
-#   8000 → zayo-platform-ai port-forward
+#   8000 → idp-platform-ai port-forward
 #   8080 → spring-orders-poc port-forward
 echo ""
 echo "Step 0: Pre-flight port check..."
@@ -164,14 +164,14 @@ sleep 2
 # ============================================================
 # STEP 6 - Start port-forwards to deployed cluster services
 # ============================================================
-# localhost:8000 → zayo-platform-ai ← Deployed AI gateway
+# localhost:8000 → idp-platform-ai ← Deployed AI gateway
 # localhost:8080 → spring-orders-poc
 #
 # NOTE: Port 3000 is reserved for local Backstage frontend (Step 10).
 # NOTE: DevPortal runs LOCALLY via Vite on :5173 (separate terminal tab).
 # NOTE: Backstage backend runs LOCALLY on :7007 (Step 10).
 echo "Step 6: Starting port-forwards to deployed cluster services..."
-kubectl port-forward svc/zayo-platform-ai 8000:8000 -n platform-ai &
+kubectl port-forward svc/idp-platform-ai 8000:8000 -n platform-ai &
 kubectl port-forward svc/spring-orders-poc 8080:8080 -n orders &
 sleep 5
 
@@ -220,7 +220,7 @@ echo "============================================================"
 echo "⚠️  GitLab CI/CD credential refresh (if running pipelines today):"
 echo "  aws configure export-credentials --profile $AWS_PROFILE --format env"
 echo "  Copy values into:"
-echo "  https://gitlab.com/zayo-group/devops/idp-platform/-/settings/ci_cd"
+echo "  https://gitlab.com/idp-group/devops/idp-platform/-/settings/ci_cd"
 echo "============================================================"
 echo ""
 

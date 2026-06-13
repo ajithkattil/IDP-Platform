@@ -45,5 +45,5 @@ variable "cluster_name" {
 
 variable "gitlab_group" {
   type    = string
-  default = "zayo-group/devops/idp-platform"
+  default = "idp-group/devops/idp-platform"
 }

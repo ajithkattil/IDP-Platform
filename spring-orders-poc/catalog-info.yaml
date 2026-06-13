@@ -5,7 +5,7 @@ metadata:
   title: Spring Orders POC
   description: Java Spring Boot order processing service. Demonstrates the Java golden pipeline and AI-assisted SAST explanation.
   annotations:
-    gitlab.com/project-slug: "zayo-group/devops/idp-platform/spring-orders-poc"
+    gitlab.com/project-slug: "idp-group/devops/idp-platform/spring-orders-poc"
     datadoghq.com/service-name: "spring-orders-poc"
     argocd/app-name: "spring-orders-poc"
   tags: [java, spring-boot, orders, poc, eks, tier-1]
@@ -17,4 +17,4 @@ spec:
   domain: "order-management"
   tier: 1
   dependsOn:
-    - "component:default/zayo-platform-ai"
+    - "component:default/idp-platform-ai"

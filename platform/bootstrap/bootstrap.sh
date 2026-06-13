@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# bootstrap.sh — One-time AWS setup for Zayo POC
+# bootstrap.sh — One-time AWS setup for Idp POC
 # Run this ONCE before the first terraform apply.
 # Safe to run multiple times (idempotent).
 # ============================================================
@@ -8,13 +8,13 @@ set -e
 
 REGION=${AWS_REGION:-"us-east-1"}
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-STATE_BUCKET="zayo-poc-tf-state-${ACCOUNT_ID}-idp"
-LOCK_TABLE="zayo-poc-tf-locks"
-OIDC_ROLE="zayo-poc-gitlab-ci-role"
-GITLAB_GROUP="${GITLAB_GROUP:-zayo/platform}"
+STATE_BUCKET="idp-poc-tf-state-${ACCOUNT_ID}-idp"
+LOCK_TABLE="idp-poc-tf-locks"
+OIDC_ROLE="idp-poc-gitlab-ci-role"
+GITLAB_GROUP="${GITLAB_GROUP:-idp/platform}"
 
 echo "============================================"
-echo " Zayo POC — AWS Bootstrap"
+echo " Idp POC — AWS Bootstrap"
 echo " Account: ${ACCOUNT_ID}"
 echo " Region:  ${REGION}"
 echo "============================================"
@@ -114,7 +114,7 @@ echo "  ✓ arn:aws:iam::${ACCOUNT_ID}:role/${OIDC_ROLE}"
 # ── 5. ECR repos ──────────────────────────────────────────────
 echo ""
 echo "[5/5] ECR repositories..."
-for REPO in "zayo-poc/zayo-platform-ai" "zayo-poc/spring-orders-poc"; do
+for REPO in "idp-poc/idp-platform-ai" "idp-poc/spring-orders-poc"; do
   aws ecr create-repository \
     --repository-name "${REPO}" \
     --image-tag-mutability IMMUTABLE \
@@ -138,6 +138,6 @@ echo "  TF_LOCK_TABLE   = ${LOCK_TABLE}"
 echo ""
 echo "Next step: cd platform/terraform && terraform init"
 echo "  -backend-config=\"bucket=${STATE_BUCKET}\""
-echo "  -backend-config=\"key=zayo-poc/terraform.tfstate\""
+echo "  -backend-config=\"key=idp-poc/terraform.tfstate\""
 echo "  -backend-config=\"region=${REGION}\""
 echo "  -backend-config=\"dynamodb_table=${LOCK_TABLE}\""

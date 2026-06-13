@@ -45,19 +45,19 @@ catalog:
       rules:
         - allow: [User, Group]
 
-    # Zayo IDP — Java Spring Boot template
+    # Idp IDP — Java Spring Boot template
     - type: file
       target: ./templates/java-spring-boot/template.yaml
       rules:
         - allow: [Template]
 
-    # Zayo POC services
+    # Idp POC services
     - type: url
-      target: https://gitlab.com/zayo-group/devops/idp-platform/zayo-platform-ai/-/raw/main/catalog-info.yaml
+      target: https://gitlab.com/idp-group/devops/idp-platform/idp-platform-ai/-/raw/main/catalog-info.yaml
       rules:
         - allow: [Component]
 
     - type: url
-      target: https://gitlab.com/zayo-group/devops/idp-platform/spring-orders-poc/-/raw/main/catalog-info.yaml
+      target: https://gitlab.com/idp-group/devops/idp-platform/spring-orders-poc/-/raw/main/catalog-info.yaml
       rules:
         - allow: [Component]

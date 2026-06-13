@@ -1,6 +1,6 @@
 replicaCount: 1
 image:
-  repository: "501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/spring-orders-poc"
+  repository: "123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/spring-orders-poc"
   tag: "v1.0.0-654d1689"
   pullPolicy: IfNotPresent
 namespace: orders
@@ -31,7 +31,7 @@ autoscaling:
 serviceAccount:
   create: true
   annotations:
-    eks.amazonaws.com/role-arn: "arn:aws:iam::501149494381:role/spring-orders-poc-pod-role"
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/spring-orders-poc-pod-role"
 ingress:
   enabled: false
 strategy:

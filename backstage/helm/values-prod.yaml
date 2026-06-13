@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/backstage
+  repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/backstage
   tag: "v1.0.0-df7db0ff"
   pullPolicy: IfNotPresent
 

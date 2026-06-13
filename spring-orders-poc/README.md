@@ -3,7 +3,7 @@
 **Language:** Java 17 / Spring Boot 3  
 **Namespace:** orders  
 **Port:** 8080  
-**Image:** 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/spring-orders-poc  
+**Image:** 123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/spring-orders-poc  
 **GitLab:** gitlab.com/cltajith/spring-orders-poc
 
 ---
@@ -37,7 +37,7 @@ The demo "customer" service that showcases the golden pipeline in action. It int
   "service": "spring-orders-poc",
   "orders": [
     {"id": "ORD-001", "customer": "Acme Corp", "amount": 1250.0, "status": "shipped"},
-    {"id": "ORD-002", "customer": "Zayo Internal", "amount": 890.5, "status": "pending"},
+    {"id": "ORD-002", "customer": "Idp Internal", "amount": 890.5, "status": "pending"},
     {"id": "ORD-003", "customer": "TechCo Ltd", "amount": 3400.0, "status": "delivered"}
   ],
   "total": 3
@@ -68,13 +68,13 @@ curl http://localhost:8080/api/v1/orders
 ```
 spring-orders-poc/
 ├── src/
-│   ├── main/java/com/zayo/
+│   ├── main/java/com/idp/
 │   │   ├── OrdersApplication.java      # Spring Boot entry point
 │   │   ├── controller/
 │   │   │   └── OrderController.java    # REST endpoints + intentional vulns
 │   │   └── model/
 │   │       └── Order.java              # Order data model
-│   └── test/java/com/zayo/
+│   └── test/java/com/idp/
 │       └── OrderControllerTest.java    # Unit tests
 ├── helm/
 │   ├── Chart.yaml
@@ -102,7 +102,7 @@ spring-orders-poc/
 
 ### The sast-explain stage (key demo moment)
 
-The `sast-explain` job calls `zayo-platform-ai` with the SAST findings and logs Claude's explanation directly in the pipeline output:
+The `sast-explain` job calls `idp-platform-ai` with the SAST findings and logs Claude's explanation directly in the pipeline output:
 
 ```
 [AI EXPLANATION]
@@ -148,7 +148,7 @@ The orders namespace needs an ECR pull secret:
 ```bash
 kubectl create secret docker-registry ecr-pull-secret \
   -n orders \
-  --docker-server=501149494381.dkr.ecr.us-east-1.amazonaws.com \
+  --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
   --docker-username=AWS \
   --docker-password=$(aws ecr get-login-password --region us-east-1)
 
@@ -163,7 +163,7 @@ kubectl patch deployment spring-orders-poc -n orders \
 ```yaml
 replicaCount: 1          # Reduced from 2 due to cluster resource constraints
 image:
-  repository: 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/spring-orders-poc
+  repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/spring-orders-poc
   tag: "v1.0.0-654d1689"
 livenessProbe:
   initialDelaySeconds: 45   # Spring Boot needs time to start

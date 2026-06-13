@@ -3,8 +3,8 @@ stages:
   - docker-build
 
 variables:
-  ECR_REGISTRY: "501149494381.dkr.ecr.us-east-1.amazonaws.com"
-  ECR_REPO: "zayo-poc/zayo-devportal"
+  ECR_REGISTRY: "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPO: "idp-poc/idp-devportal"
   AWS_REGION: "us-east-1"
 
 build:

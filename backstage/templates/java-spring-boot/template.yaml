@@ -59,9 +59,9 @@ spec:
       name: Create GitLab repo
       action: publish:gitlab
       input:
-        repoUrl: gitlab.com?owner=zayo-group/devops/idp-platform&repo=${{ parameters.service_name }}
+        repoUrl: gitlab.com?owner=idp-group/devops/idp-platform&repo=${{ parameters.service_name }}
         defaultBranch: main
-        gitCommitMessage: "feat: initial scaffold by Zayo IDP"
+        gitCommitMessage: "feat: initial scaffold by Idp IDP"
         repoVisibility: private
 
     - id: register

@@ -1,4 +1,4 @@
 apiVersion: v2
-name: zayo-devportal
+name: idp-devportal
 version: 1.0.0
 appVersion: "1.0.0"

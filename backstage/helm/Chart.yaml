@@ -1,6 +1,6 @@
 apiVersion: v2
 name: backstage
-description: Zayo IDP Backstage Developer Portal
+description: Idp IDP Backstage Developer Portal
 type: application
 version: 1.0.0
 appVersion: "1.0.0"

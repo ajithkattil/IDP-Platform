@@ -1,6 +1,6 @@
 replicaCount: 1
 image:
-  repository: 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/zayo-devportal
+  repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/idp-devportal
   tag: "v1.0.0-84751ea3"
   pullPolicy: Always
 service:

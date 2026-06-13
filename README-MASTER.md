@@ -1,4 +1,4 @@
-# Zayo IDP POC — Master Guide
+# Idp IDP POC — Master Guide
 
 **Owner:** Ajith Kattil · Platform Engineering  
 **GitLab:** gitlab.com/cltajith  
@@ -25,7 +25,7 @@ GitLab CI/CD (gitlab.com/cltajith)
       │
       ├── lint → sast → test        (runs on every push)
       │         │
-      │         └── sast-explain ──► zayo-platform-ai (Claude API)
+      │         └── sast-explain ──► idp-platform-ai (Claude API)
       │                              "explain this vulnerability in plain English"
       │
       ├── docker build → ECR push   (runs on main branch only)
@@ -37,7 +37,7 @@ GitLab CI/CD (gitlab.com/cltajith)
                                platform-ai    orders
                                namespace      namespace
                                      │           │
-                             zayo-platform-ai  spring-orders-poc
+                             idp-platform-ai  spring-orders-poc
                              (Python/FastAPI)  (Java/Spring Boot)
                                      │
                                Claude API (Anthropic)
@@ -50,7 +50,7 @@ GitLab CI/CD (gitlab.com/cltajith)
 
 | Repo | Language | Purpose | GitLab URL |
 |------|----------|---------|------------|
-| `zayo-platform-ai` | Python 3.11 / FastAPI | AI service — Claude API, SAST explanation, data bridge | gitlab.com/cltajith/zayo-platform-ai |
+| `idp-platform-ai` | Python 3.11 / FastAPI | AI service — Claude API, SAST explanation, data bridge | gitlab.com/cltajith/idp-platform-ai |
 | `spring-orders-poc` | Java 17 / Spring Boot | Demo customer service — intentional vulnerabilities for SAST demo | gitlab.com/cltajith/spring-orders-poc |
 | `platform` | Bash / Terraform / HCL | Infrastructure — bootstrap, EKS, ArgoCD, scripts | gitlab.com/cltajith/platform |
 | `backstage` | Node.js / React | Developer portal — service catalog, software templates | gitlab.com/cltajith/backstage (planned) |
@@ -61,14 +61,14 @@ GitLab CI/CD (gitlab.com/cltajith)
 
 | Component | Value |
 |-----------|-------|
-| AWS Account | 501149494381 |
+| AWS Account | 123456789012 |
 | Region | us-east-1 |
 | EKS Cluster | test-cluster-cicd-deployment |
 | ECR Registry | *****************.dkr.ecr.us-east-1.amazonaws.com |
-| ECR Repo (AI) | zayo-poc/zayo-platform-ai |
-| ECR Repo (Orders) | zayo-poc/spring-orders-poc |
-| Terraform State | s3://zayo-poc-tf-state-***************-idp |
-| DynamoDB Lock | zayo-poc-tf-locks |
+| ECR Repo (AI) | idp-poc/idp-platform-ai |
+| ECR Repo (Orders) | idp-poc/spring-orders-poc |
+| Terraform State | s3://idp-poc-tf-state-***************-idp |
+| DynamoDB Lock | idp-poc-tf-locks |
 
 ---
 
@@ -76,7 +76,7 @@ GitLab CI/CD (gitlab.com/cltajith)
 
 | Namespace | Contents | Status |
 |-----------|----------|--------|
-| `platform-ai` | zayo-platform-ai deployment (2 replicas) | Running |
+| `platform-ai` | idp-platform-ai deployment (2 replicas) | Running |
 | `orders` | spring-orders-poc deployment (1 replica) | Running |
 | `argocd` | ArgoCD server, controller, repo server | Running |
 | `backstage` | Backstage portal | Planned |
@@ -88,11 +88,11 @@ GitLab CI/CD (gitlab.com/cltajith)
 ### Setup (before presenting)
 ```bash
 # Refresh SSO
-aws sso login --profile idp_dev_pwruser_ps-501149494381
-export AWS_PROFILE=idp_dev_pwruser_ps-501149494381
+aws sso login --profile idp_dev_pwruser_ps-123456789012
+export AWS_PROFILE=idp_dev_pwruser_ps-123456789012
 
 # Start port-forwards
-kubectl port-forward svc/zayo-platform-ai 8000:8000 -n platform-ai &
+kubectl port-forward svc/idp-platform-ai 8000:8000 -n platform-ai &
 kubectl port-forward svc/spring-orders-poc 8080:8080 -n orders &
 
 # Verify both services healthy
@@ -100,7 +100,7 @@ curl -s http://localhost:8000/api/v1/health
 curl -s http://localhost:8080/actuator/health
 
 # Open mockup
-open /Users/kattil/Desktop/code/ZAYO/POC/zayo_devportal_v3_complete.html
+open /Users/kattil/Desktop/code/IDP/POC/idp_devportal_v3_complete.html
 ```
 
 ### Demo script
@@ -123,7 +123,7 @@ open /Users/kattil/Desktop/code/ZAYO/POC/zayo_devportal_v3_complete.html
 
 | Variable | Description | Masked |
 |----------|-------------|--------|
-| `AWS_ACCOUNT_ID` | 501149494381 | No |
+| `AWS_ACCOUNT_ID` | 123456789012 | No |
 | `AWS_REGION` | us-east-1 | No |
 | `AWS_ACCESS_KEY_ID` | SSO temporary key (refresh every 24h) | Yes |
 | `AWS_SECRET_ACCESS_KEY` | SSO temporary secret | Yes |
@@ -136,9 +136,9 @@ open /Users/kattil/Desktop/code/ZAYO/POC/zayo_devportal_v3_complete.html
 
 ### Refreshing AWS credentials (required every ~8 hours)
 ```bash
-aws sso login --profile idp_dev_pwruser_ps-501149494381
-export AWS_PROFILE=idp_dev_pwruser_ps-501149494381
-aws configure export-credentials --profile idp_dev_pwruser_ps-501149494381 --format env
+aws sso login --profile idp_dev_pwruser_ps-123456789012
+export AWS_PROFILE=idp_dev_pwruser_ps-123456789012
+aws configure export-credentials --profile idp_dev_pwruser_ps-123456789012 --format env
 # Update AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN in GitLab CI/CD variables
 ```
 
@@ -169,4 +169,4 @@ aws configure export-credentials --profile idp_dev_pwruser_ps-501149494381 --for
 
 ## Contact
 
-**Ajith Kattil** · Ajith.KumarKattil@zayo.com · Platform Engineering
+**Ajith Kattil** · Ajith.KumarKattil@idp.com · Platform Engineering

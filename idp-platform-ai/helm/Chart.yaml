@@ -1,0 +1,9 @@
+apiVersion: v2
+name: idp-platform-ai
+description: Idp Platform AI service — AI Copilot backend for the DevPortal
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Platform Engineering
+    email: platform-engineering@idp.com

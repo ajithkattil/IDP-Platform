@@ -9,8 +9,8 @@ stages:
 
 variables:
   SERVICE_NAME: "${{ values.service_name }}"
-  ECR_REGISTRY: "501149494381.dkr.ecr.us-east-1.amazonaws.com"
-  ECR_REPO: "zayo-poc/${{ values.service_name }}"
+  ECR_REGISTRY: "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPO: "idp-poc/${{ values.service_name }}"
   AWS_REGION: "us-east-1"
   AWS_DEFAULT_REGION: "us-east-1"
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"

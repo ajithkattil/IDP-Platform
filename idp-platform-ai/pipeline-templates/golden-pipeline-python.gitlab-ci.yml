@@ -1,0 +1,423 @@
+# ============================================================
+# IDP GOLDEN PIPELINE TEMPLATE — Python / FastAPI
+# Layer: L3 · CI Pipeline Template Library
+# Owner: Platform Engineering · Version: v1.4
+#
+# App teams include this via .gitlab-ci.yml (6 lines).
+# Platform team owns this file — improvements benefit all Python services.
+#
+# Stages (auto-triggered on push to any branch / MR open):
+#   1. lint       — flake8 + pylint (immediate, runs within seconds of push)
+#   2. sast       — Checkmarx + bandit + Gitleaks (immediate, parallel with lint)
+#   3. test       — pytest + coverage gate (80%)
+#   4. build      — Docker multi-stage image
+#   5. push       — ECR push (OIDC) + Trivy scan + SBOM → S3
+#   6. iac        — terraform plan + apply (infra gate before deploy)
+#   7. update-helm— Helm values image.tag update → git push [skip ci]
+#   8. notify     — Deployment Record + Datadog DORA events
+# ============================================================
+
+variables:
+  AWS_REGION: "us-east-1"
+  ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+  ECR_REPO: "idp-poc/${SERVICE_NAME}"
+  IMAGE_TAG: "${CI_COMMIT_TAG:-${CI_COMMIT_SHORT_SHA}}"
+  FULL_IMAGE: "${ECR_REGISTRY}/${ECR_REPO}:v1.0.0-${IMAGE_TAG}"
+  TF_WORKSPACE: "prod"
+  PYTHON_VERSION: "3.11"
+  COVERAGE_THRESHOLD: "80"
+  HELM_CHART_VERSION: "idp-web-service-v1.4"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+
+stages:
+  - lint
+  - sast
+  - test
+  - build
+  - push
+  - iac
+  - update-helm
+  - notify
+
+# ── Caches ──────────────────────────────────────────────────
+.pip-cache: &pip-cache
+  cache:
+    key: "${CI_PROJECT_PATH}-python-${PYTHON_VERSION}"
+    paths:
+      - .pip-cache/
+    policy: pull-push
+
+# ── OIDC auth (no static AWS creds anywhere) ────────────────
+.aws-oidc: &aws-oidc
+  id_tokens:
+    AWS_OIDC_TOKEN:
+      aud: "https://gitlab.com"
+  before_script:
+    - |
+      export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s"
+        $(aws sts assume-role-with-web-identity
+          --role-arn "${AWS_ROLE_ARN}"
+          --role-session-name "gitlab-ci-${CI_JOB_ID}"
+          --web-identity-token "${AWS_OIDC_TOKEN}"
+          --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]"
+          --output text))
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 1 — LINT (runs immediately on push, no queue wait)
+# ═══════════════════════════════════════════════════════════
+lint:
+  stage: lint
+  image: python:${PYTHON_VERSION}-slim
+  <<: *pip-cache
+  script:
+    - pip install flake8 flake8-bugbear pylint --quiet
+    - echo "[lint] flake8..."
+    - flake8 app/ --max-line-length=100 --extend-ignore=E203,W503
+    - echo "[lint] pylint..."
+    - pylint app/ --fail-under=7.0 --disable=C0114,C0115,C0116 || true
+    - echo "[lint] PASSED"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 2 — SAST (runs immediately on push, parallel with lint)
+# Checkmarx for CWE Top 25, bandit for Python-specific,
+# Gitleaks for credential leaks. All block on Critical/High.
+# ═══════════════════════════════════════════════════════════
+sast-bandit:
+  stage: sast
+  image: python:${PYTHON_VERSION}-slim
+  <<: *pip-cache
+  script:
+    - pip install bandit --quiet
+    - echo "[sast] bandit Python security scan..."
+    - bandit -r app/ -ll -f json -o bandit-report.json || true
+    - |
+      python3 -c "
+      import json, sys
+      with open('bandit-report.json') as f:
+          r = json.load(f)
+      highs = [x for x in r['results'] if x['issue_severity'] in ('HIGH','CRITICAL')]
+      if highs:
+          print(f'BLOCKED: {len(highs)} High/Critical bandit findings')
+          for h in highs:
+              print(f'  {h[\"issue_severity\"]}: {h[\"issue_text\"]} in {h[\"filename\"]}:{h[\"line_number\"]}')
+          sys.exit(1)
+      print(f'bandit: 0 High/Critical findings · PASSED')
+      "
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - bandit-report.json
+    expire_in: 30 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+sast-checkmarx:
+  stage: sast
+  image: checkmarx/cx-flow:latest
+  script:
+    - echo "[sast] Checkmarx SAST scan · ruleset CWE Top 25 + OWASP Top 10..."
+    - |
+      java -jar /app/cx-flow.jar \
+        --spring.profiles.active=cxgo \
+        --cx-project="${SERVICE_NAME}-${CI_COMMIT_REF_SLUG}" \
+        --app="${SERVICE_NAME}" \
+        --branch="${CI_COMMIT_BRANCH}" \
+        --repo-url="${CI_PROJECT_URL}" \
+        --severity="HIGH" \
+        --break-build=true
+    - echo "[sast] Checkmarx PASSED"
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - cx-report.json
+    expire_in: 30 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+secrets-scan:
+  stage: sast
+  image: zricethezav/gitleaks:latest
+  script:
+    - echo "[sast] Gitleaks scanning for committed secrets..."
+    - |
+      gitleaks detect \
+        --source . \
+        --log-level info \
+        --redact \
+        --exit-code 1 \
+        --report-format json \
+        --report-path gitleaks-report.json
+    - echo "[sast] Gitleaks: 0 secrets found · CLEAN"
+  allow_failure: false
+  artifacts:
+    when: always
+    paths:
+      - gitleaks-report.json
+    expire_in: 30 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 3 — TEST
+# pytest with coverage gate. Fails if coverage < threshold.
+# ═══════════════════════════════════════════════════════════
+test:
+  stage: test
+  image: python:${PYTHON_VERSION}-slim
+  <<: *pip-cache
+  script:
+    - pip install -r requirements-dev.txt --quiet
+    - echo "[test] pytest with coverage gate ${COVERAGE_THRESHOLD}%..."
+    - |
+      pytest tests/ \
+        --cov=app \
+        --cov-report=xml:coverage.xml \
+        --cov-report=term-missing \
+        --cov-fail-under=${COVERAGE_THRESHOLD} \
+        --junitxml=test-results.xml \
+        -v
+    - echo "[test] PASSED"
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    expire_in: 7 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 4 — DOCKER BUILD
+# Multi-stage: builder → runtime. ddtrace baked in.
+# ═══════════════════════════════════════════════════════════
+docker-build:
+  stage: build
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_BUILDKIT: "1"
+  script:
+    - echo "[docker] Multi-stage build..."
+    - |
+      docker build \
+        --build-arg PYTHON_VERSION=${PYTHON_VERSION} \
+        --label "git.commit=${CI_COMMIT_SHA}" \
+        --label "git.branch=${CI_COMMIT_BRANCH}" \
+        --label "pipeline.id=${CI_PIPELINE_ID}" \
+        --label "jira.ticket=$(echo ${CI_COMMIT_BRANCH} | grep -oP 'ZSP-\d+' || echo 'no-ticket')" \
+        -t ${FULL_IMAGE} \
+        .
+    - echo "[docker] Image built · $(docker image inspect ${FULL_IMAGE} --format='{{.Size}}' | awk '{printf \"%.0f MB\", $1/1024/1024}')"
+    - docker save ${FULL_IMAGE} > image.tar
+  artifacts:
+    paths:
+      - image.tar
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 5 — ECR PUSH + TRIVY SCAN + SBOM
+# OIDC auth — zero static AWS credentials.
+# Trivy blocks on new Critical CVEs.
+# SBOM archived to S3 GLACIER_IR (immutable).
+# ═══════════════════════════════════════════════════════════
+ecr-push:
+  stage: push
+  image: docker:24-dind
+  services:
+    - docker:24-dind
+  <<: *aws-oidc
+  script:
+    - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+    - docker load < image.tar
+    - echo "[ecr] Pushing ${FULL_IMAGE}..."
+    - docker push ${FULL_IMAGE}
+    - echo "[ecr] Trivy container scan..."
+    - |
+      docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:latest image \
+        --severity CRITICAL \
+        --exit-code 1 \
+        --no-progress \
+        ${FULL_IMAGE}
+    - echo "[ecr] Generating SBOM (Syft)..."
+    - |
+      docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        anchore/syft:latest \
+        ${FULL_IMAGE} -o spdx-json > sbom-${IMAGE_TAG}.json
+    - echo "[ecr] Uploading SBOM to S3 (immutable GLACIER_IR)..."
+    - |
+      aws s3 cp sbom-${IMAGE_TAG}.json \
+        s3://idp-poc-sboms/${SERVICE_NAME}/sbom-${IMAGE_TAG}.json \
+        --storage-class GLACIER_IR \
+        --metadata "service=${SERVICE_NAME},commit=${CI_COMMIT_SHA},pipeline=${CI_PIPELINE_ID}"
+    - echo "[ecr] ECR push complete · SBOM archived"
+  artifacts:
+    paths:
+      - sbom-${IMAGE_TAG}.json
+    expire_in: 90 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 6 — TERRAFORM IaC GATE
+# Plan always. Apply only on main.
+# If infra is already correct: 0 changes, fast.
+# If infra drifted from console: corrected here before deploy.
+# ═══════════════════════════════════════════════════════════
+terraform-plan:
+  stage: iac
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
+  <<: *aws-oidc
+  variables:
+    TF_VAR_service_name: "${SERVICE_NAME}"
+    TF_VAR_image_tag: "v1.0.0-${IMAGE_TAG}"
+    TF_VAR_environment: "prod"
+    TF_IN_AUTOMATION: "true"
+  script:
+    - cd terraform
+    - terraform init -backend-config="bucket=idp-poc-tf-state" -backend-config="key=${SERVICE_NAME}/${TF_WORKSPACE}/terraform.tfstate" -backend-config="region=${AWS_REGION}" -backend-config="dynamodb_table=idp-poc-tf-locks" -input=false
+    - terraform workspace select ${TF_WORKSPACE} || terraform workspace new ${TF_WORKSPACE}
+    - terraform plan -out=tfplan -input=false
+    - terraform show -json tfplan > tfplan.json
+    - echo "[iac] Plan complete"
+  artifacts:
+    paths:
+      - terraform/tfplan
+      - terraform/tfplan.json
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+terraform-apply:
+  stage: iac
+  image:
+    name: hashicorp/terraform:1.7
+    entrypoint: [""]
+  <<: *aws-oidc
+  variables:
+    TF_VAR_service_name: "${SERVICE_NAME}"
+    TF_VAR_image_tag: "v1.0.0-${IMAGE_TAG}"
+    TF_VAR_environment: "prod"
+    TF_IN_AUTOMATION: "true"
+  script:
+    - cd terraform
+    - terraform init -backend-config="bucket=idp-poc-tf-state" -backend-config="key=${SERVICE_NAME}/${TF_WORKSPACE}/terraform.tfstate" -backend-config="region=${AWS_REGION}" -backend-config="dynamodb_table=idp-poc-tf-locks" -input=false
+    - terraform workspace select ${TF_WORKSPACE}
+    - terraform apply -auto-approve -input=false tfplan
+    - terraform output -json > tf-outputs.json
+    - echo "[iac] Apply complete · state pushed to S3 · lock released"
+  needs:
+    - terraform-plan
+  artifacts:
+    paths:
+      - terraform/tf-outputs.json
+    expire_in: 7 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 7 — HELM VALUES UPDATE (GitOps handoff)
+# CI job ends here. ArgoCD takes over.
+# Updates image.tag in values-prod.yaml and pushes [skip ci].
+# ArgoCD detects the diff and syncs to EKS within 3 minutes.
+# ═══════════════════════════════════════════════════════════
+update-helm-values:
+  stage: update-helm
+  image: alpine/git:latest
+  script:
+    - echo "[helm] GitOps handoff · updating image.tag..."
+    - git config user.email "platform-ci@idp.com"
+    - git config user.name "Idp Platform CI"
+    - git remote set-url origin "https://platform-ci:${PLATFORM_CI_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git fetch origin main && git checkout main
+    - sed -i "s|tag:.*|tag: v1.0.0-${IMAGE_TAG}|g" ${HELM_CHART_PATH}/values-prod.yaml
+    - grep "tag:" ${HELM_CHART_PATH}/values-prod.yaml
+    - |
+      git add ${HELM_CHART_PATH}/values-prod.yaml
+      git commit -m "chore(deploy): update ${SERVICE_NAME} image tag v1.0.0-${IMAGE_TAG} [skip ci]
+
+      Pipeline: ${CI_PIPELINE_ID}
+      Commit:   ${CI_COMMIT_SHA}
+      Jira:     $(echo ${CI_COMMIT_BRANCH} | grep -oP 'ZSP-\d+' || echo 'no-ticket')
+      "
+    - git push origin main
+    - echo "[helm] Pushed · ArgoCD webhook triggered · sync within 3 min"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ═══════════════════════════════════════════════════════════
+# STAGE 8 — NOTIFY (DORA metrics + Deployment Record)
+# Writes immutable deploy row to Postgres.
+# Fires deploy event to Datadog DORA API.
+# lead_time = committed_at → deployed_at (measured here, not estimated)
+# ═══════════════════════════════════════════════════════════
+notify-deployment:
+  stage: notify
+  image: python:${PYTHON_VERSION}-slim
+  <<: *aws-oidc
+  script:
+    - pip install psycopg2-binary requests boto3 --quiet
+    - |
+      JIRA_TICKET=$(echo ${CI_COMMIT_BRANCH} | grep -oP 'ZSP-\d+' || echo "no-ticket")
+      COMMITTED_AT=$(git log -1 --format=%ct ${CI_COMMIT_SHA})
+      DEPLOYED_AT=$(date +%s)
+      echo "[notify] Jira: ${JIRA_TICKET} · Lead time: $((DEPLOYED_AT - COMMITTED_AT))s"
+
+      python3 scripts/write-deployment-record.py \
+        --service   "${SERVICE_NAME}" \
+        --env       "prod" \
+        --version   "v1.0.0-${IMAGE_TAG}" \
+        --image-tag "${FULL_IMAGE}" \
+        --git-sha   "${CI_COMMIT_SHA}" \
+        --mr-iid    "${CI_MERGE_REQUEST_IID:-direct}" \
+        --pipeline  "${CI_PIPELINE_ID}" \
+        --jira      "${JIRA_TICKET}" \
+        --committed "${COMMITTED_AT}" \
+        --deployed  "${DEPLOYED_AT}"
+
+      python3 scripts/fire-datadog-event.py \
+        --service      "${SERVICE_NAME}" \
+        --env          "prod" \
+        --version      "v1.0.0-${IMAGE_TAG}" \
+        --committed-at "${COMMITTED_AT}" \
+        --deployed-at  "${DEPLOYED_AT}" \
+        --pipeline-url "${CI_PIPELINE_URL}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ── On failure: fire failed-change event → feeds CFR metric ──
+notify-failure:
+  stage: notify
+  image: python:${PYTHON_VERSION}-slim
+  script:
+    - pip install requests --quiet
+    - |
+      python3 scripts/fire-datadog-event.py \
+        --service  "${SERVICE_NAME}" \
+        --env      "prod" \
+        --version  "v1.0.0-${IMAGE_TAG}" \
+        --failed   true \
+        --pipeline-url "${CI_PIPELINE_URL}"
+  when: on_failure
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

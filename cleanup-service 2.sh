@@ -34,12 +34,12 @@ fi
 
 # === Configuration — adjust if your environment differs ===
 AWS_REGION="us-east-1"
-AWS_ACCOUNT_ID="501149494381"
+AWS_ACCOUNT_ID="123456789012"
 EKS_CLUSTER="eks-test-cluster"
-GITLAB_GROUP="zayo-group/devops/idp-platform"
+GITLAB_GROUP="idp-group/devops/idp-platform"
 BACKSTAGE_URL="http://localhost:7007"
 ARGOCD_NAMESPACE="argocd"
-TF_STATE_DIR="$HOME/Desktop/code/ZAYO/POC/platform/terraform/modules/idp-service"
+TF_STATE_DIR="$HOME/Desktop/code/IDP/POC/platform/terraform/modules/idp-service"
 
 # Colors for output
 R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'; B='\033[0;34m'; N='\033[0m'

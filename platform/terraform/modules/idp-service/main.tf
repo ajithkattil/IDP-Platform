@@ -1,5 +1,5 @@
 # ============================================================
-# Zayo IDP — Per-service Terraform module
+# Idp IDP — Per-service Terraform module
 # Called by Backstage scaffolder when a new service is created
 #
 # Creates per service:
@@ -19,14 +19,14 @@ terraform {
 }
 
 locals {
-  ecr_repo  = "zayo-poc/${var.service_name}"
+  ecr_repo  = "idp-poc/${var.service_name}"
   namespace = var.service_name
   tags = {
     Service     = var.service_name
     Owner       = var.owner_team
     Environment = var.environment
     ManagedBy   = "terraform"
-    CreatedBy   = "zayo-idp-scaffolder"
+    CreatedBy   = "idp-idp-scaffolder"
   }
 }
 
@@ -61,13 +61,13 @@ resource "kubernetes_namespace" "service" {
     labels = {
       "app.kubernetes.io/name"       = var.service_name
       "app.kubernetes.io/managed-by" = "terraform"
-      "zayo.com/owner"               = var.owner_team
-      "zayo.com/environment"         = var.environment
+      "idp.com/owner"               = var.owner_team
+      "idp.com/environment"         = var.environment
     }
     annotations = {
-      "zayo.com/service"     = var.service_name
-      "zayo.com/owner-team"  = var.owner_team
-      "zayo.com/description" = var.description
+      "idp.com/service"     = var.service_name
+      "idp.com/owner-team"  = var.owner_team
+      "idp.com/description" = var.description
     }
   }
 }
@@ -117,8 +117,8 @@ metadata:
   name: ${var.service_name}
   namespace: argocd
   labels:
-    zayo.com/service: "${var.service_name}"
-    zayo.com/owner-team: "${var.owner_team}"
+    idp.com/service: "${var.service_name}"
+    idp.com/owner-team: "${var.owner_team}"
 spec:
   project: default
   source:

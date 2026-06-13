@@ -137,7 +137,7 @@ function Sidebar({active,onNav,live}){
             <Icon id="logo" size={16}/>
           </div>
           <div>
-            <div style={{fontSize:13.5,fontWeight:700,color:DS.t1,letterSpacing:"-.03em"}}>Zayo DevPortal</div>
+            <div style={{fontSize:13.5,fontWeight:700,color:DS.t1,letterSpacing:"-.03em"}}>Idp DevPortal</div>
             <div style={{fontSize:9,color:DS.t4,textTransform:"uppercase",letterSpacing:".1em",marginTop:1}}>Platform Engineering</div>
           </div>
         </div>
@@ -217,14 +217,14 @@ function Dashboard({live,onNav}){
     {label:"MTTR",val:dora.mttr,unit:"min",trend:"+8min · target <30",up:false,pct:43},
   ];
   const pipelines=[
-    {name:"zayo-platform-ai",s:[1,1,1,1,1,1,1],st:"green",time:"4m 12s"},
+    {name:"idp-platform-ai",s:[1,1,1,1,1,1,1],st:"green",time:"4m 12s"},
     {name:"spring-orders-poc",s:[1,1,1,1,1,2,0],st:"blue",time:"running"},
     {name:"billing-service",s:[1,3,0,0,0,0,0],st:"red",time:"2m 08s"},
     {name:"auth-gateway",s:[1,1,1,1,1,1,1],st:"green",time:"3m 55s"},
   ];
   const SC={1:DS.ok,2:DS.ac,3:DS.er,0:DS.b3};
   const activity=[
-    {c:DS.ok,t:<><strong style={{color:DS.t1}}>zayo-platform-ai</strong> v1.0.0 deployed · ArgoCD sync · 1/1 healthy</>,time:"2m"},
+    {c:DS.ok,t:<><strong style={{color:DS.t1}}>idp-platform-ai</strong> v1.0.0 deployed · ArgoCD sync · 1/1 healthy</>,time:"2m"},
     {c:DS.ac,t:<><strong style={{color:DS.t1}}>spring-orders-poc</strong> pipeline running · stage 6/7</>,time:"14m"},
     {c:DS.wa,t:<>AWS SSO expires in <strong style={{color:DS.t1}}>6 hours</strong> · update GitLab CI/CD vars</>,time:"31m"},
     {c:DS.ok,t:<>Backstage: <strong style={{color:DS.t1}}>2 services</strong> registered · catalog healthy</>,time:"1h"},
@@ -313,7 +313,7 @@ function Dashboard({live,onNav}){
 function Catalog({live}){
   const [filter,setFilter]=useState("All");
   const demo=[
-    {name:"zayo-platform-ai",type:"C",system:"developer-platform",owner:"platform-engineering",lang:"Python 3.11",target:"EKS",s:[1,1,1,1,1,1,1],st:"green",domain:"Platform"},
+    {name:"idp-platform-ai",type:"C",system:"developer-platform",owner:"platform-engineering",lang:"Python 3.11",target:"EKS",s:[1,1,1,1,1,1,1],st:"green",domain:"Platform"},
     {name:"spring-orders-poc",type:"C",system:"order-fulfillment",owner:"orders-team",lang:"Java 17",target:"EKS",s:[1,1,1,1,1,2,0],st:"blue",domain:"Order Mgmt"},
     {name:"auth-gateway",type:"C",system:"security-system",owner:"platform-eng",lang:".NET 8",target:"EKS",s:[1,1,1,1,1,1,1],st:"green",domain:"Platform"},
     {name:"billing-service",type:"C",system:"billing-system",owner:"finance-eng",lang:"Java 17",target:"EKS",s:[1,3,0,0,0,0,0],st:"red",domain:"Finance"},
@@ -400,7 +400,7 @@ function Catalog({live}){
 }
 
 function Copilot({live}){
-  const [msgs,setMsgs]=useState([{role:"ai",text:"I have context on your POC — zayo-platform-ai and spring-orders-poc are live on EKS. Backstage catalog is running headless. How can I help?"}]);
+  const [msgs,setMsgs]=useState([{role:"ai",text:"I have context on your POC — idp-platform-ai and spring-orders-poc are live on EKS. Backstage catalog is running headless. How can I help?"}]);
   const [input,setInput]=useState("");
   const [thinking,setThinking]=useState(false);
   const endRef=useRef(null);
@@ -412,11 +412,11 @@ function Copilot({live}){
     setMsgs(m=>[...m,{role:"user",text:q}]);
     setThinking(true);
     try{
-      const res=await fetch(`${AI_URL}/api/v1/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,context:"Zayo IDP POC on EKS us-east-1. zayo-platform-ai (Python/FastAPI), spring-orders-poc (Java Spring Boot), Backstage headless catalog."})});
+      const res=await fetch(`${AI_URL}/api/v1/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,context:"Idp IDP POC on EKS us-east-1. idp-platform-ai (Python/FastAPI), spring-orders-poc (Java Spring Boot), Backstage headless catalog."})});
       const d=await res.json();
       setMsgs(m=>[...m,{role:"ai",text:d.content||d.content||d.content||d.response||d.message||"Received."}]);
     }catch{
-      setMsgs(m=>[...m,{role:"ai",text:"Can't reach AI service.\n\nRun: kubectl port-forward svc/zayo-platform-ai 8000:8000 -n platform-ai"}]);
+      setMsgs(m=>[...m,{role:"ai",text:"Can't reach AI service.\n\nRun: kubectl port-forward svc/idp-platform-ai 8000:8000 -n platform-ai"}]);
     }
     setThinking(false);
   };
@@ -425,14 +425,14 @@ function Copilot({live}){
     <div className="page-enter" style={{display:"flex",flexDirection:"column",height:"calc(100vh - 90px)"}}>
       <div className="s1" style={{marginBottom:14,flexShrink:0}}>
         <div style={{fontSize:20,fontWeight:700,color:DS.t1,letterSpacing:"-.04em",marginBottom:3}}>AI copilot</div>
-        <div style={{fontSize:12.5,color:DS.t3}}>Claude Sonnet 4 · zayo-platform-ai · EKS us-east-1</div>
+        <div style={{fontSize:12.5,color:DS.t3}}>Claude Sonnet 4 · idp-platform-ai · EKS us-east-1</div>
       </div>
       <div className="s2" style={{flex:1,display:"grid",gridTemplateColumns:"1fr 260px",gap:12,minHeight:0}}>
         <div style={{background:DS.bg3,border:`1px solid ${DS.b2}`,borderRadius:DS.r10,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <div style={{padding:"12px 16px",borderBottom:`1px solid ${DS.b1}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
             <div style={{width:32,height:32,borderRadius:10,background:`linear-gradient(135deg,${DS.ac},${DS.te})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon id="ai" size={14}/></div>
             <div>
-              <div style={{fontSize:13,fontWeight:700,color:DS.t1}}>Zayo AI Copilot</div>
+              <div style={{fontSize:13,fontWeight:700,color:DS.t1}}>Idp AI Copilot</div>
               <div style={{fontSize:10.5,color:live?.health?DS.ok:DS.t4,display:"flex",alignItems:"center",gap:4}}>
                 {live?.health&&<Dot status="ok" animated/>}{live?.health?`Live · ${Math.round(live.health.checks?.claude_api?.latency_ms||960)}ms`:"Demo mode"}
               </div>
@@ -467,7 +467,7 @@ function Copilot({live}){
           {[
             {title:"AI engine",rows:[["Model","claude-sonnet-4"],["Status",live?.health?"Healthy":"Demo"],["Latency",live?.health?`~${Math.round(live.health.checks?.claude_api?.latency_ms||960)}ms`:"—"],["Endpoint","localhost:8000"]]},
             {title:"Backstage",rows:[["Status","Running"],["Catalog","200 OK"],["Port","localhost:7007"],["Entities",live?.entities?.length||"2+"]]},
-            {title:"EKS services",rows:[["zayo-platform-ai","1/1 Running"],["spring-orders-poc","1/1 Running"],["backstage","1/1 Running"],["argocd","6/7 Running"]]},
+            {title:"EKS services",rows:[["idp-platform-ai","1/1 Running"],["spring-orders-poc","1/1 Running"],["backstage","1/1 Running"],["argocd","6/7 Running"]]},
           ].map((p,i)=>(
             <Card key={i} style={{flexShrink:0}}>
               <CardHeader left={p.title}/>
@@ -488,8 +488,8 @@ function Health({live}){
     {name:"ArgoCD",st:"ok",rows:[["Apps","3"],["Synced","3"],["Healthy","3"],["Namespace","argocd"]]},
     {name:"AWS ECR",st:"ok",rows:[["Repos","3"],["Images","18+"],["Region","us-east-1"],["Auth","SSO"]]},
     {name:"Backstage",st:"ok",rows:[["Entities",live?.entities?.length||"2+"],["API","200 OK"],["Mode","Headless"],["Auth","Guest"]]},
-    {name:"zayo-platform-ai",st:live?.health?"ok":"warn",rows:[["Status",live?.health?"Healthy":"Unreachable"],["Claude","OK"],["Latency","~960ms"],["Version","v1.0.0"]]},
-    {name:"AWS SSO",st:"warn",rows:[["Session","Active"],["Expires","~6h"],["Account","501149494381"],["Profile","idp_dev_pwruser"]]},
+    {name:"idp-platform-ai",st:live?.health?"ok":"warn",rows:[["Status",live?.health?"Healthy":"Unreachable"],["Claude","OK"],["Latency","~960ms"],["Version","v1.0.0"]]},
+    {name:"AWS SSO",st:"warn",rows:[["Session","Active"],["Expires","~6h"],["Account","123456789012"],["Profile","idp_dev_pwruser"]]},
   ];
   return(
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -511,7 +511,7 @@ function Health({live}){
           <CardHeader left="EKS cluster · test-cluster-cicd-deployment · us-east-1"/>
           <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {[
-              {ns:"platform-ai",pods:[{n:"zayo-platform-ai",st:"ok",r:"1/1"}]},
+              {ns:"platform-ai",pods:[{n:"idp-platform-ai",st:"ok",r:"1/1"}]},
               {ns:"orders",pods:[{n:"spring-orders-poc",st:"ok",r:"1/1"}]},
               {ns:"backstage",pods:[{n:"backstage",st:"ok",r:"1/1"}]},
               {ns:"argocd",pods:[{n:"argocd-server",st:"ok",r:"1/1"},{n:"argocd-applicationset",st:"warn",r:"0/1"}]},
@@ -537,7 +537,7 @@ function Health({live}){
 }
 
 function GoldenThread(){
-  const [svc,setSvc]=useState("zayo-platform-ai");
+  const [svc,setSvc]=useState("idp-platform-ai");
   const stages=[{l:"Lint",v:"ESLint/Flake8",t:"22s"},{l:"SAST",v:"Bandit/Semgrep",t:"45s"},{l:"Tests",v:"pytest/JUnit",t:"1m 12s"},{l:"Build",v:"Docker",t:"1m 40s"},{l:"ECR push",v:"v1.0.0-xxx",t:"28s"},{l:"ArgoCD",v:"Helm values",t:"18s"},{l:"EKS",v:"1/1 Running",t:"42s"}];
   return(
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -545,7 +545,7 @@ function GoldenThread(){
       <div className="s2" style={{display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:12,color:DS.t3}}>Service:</span>
         <select value={svc} onChange={e=>setSvc(e.target.value)} style={{background:DS.bg4,border:`1px solid ${DS.b2}`,borderRadius:DS.r8,padding:"6px 11px",color:DS.t1,fontSize:13,outline:"none",cursor:"pointer"}}>
-          {["zayo-platform-ai","spring-orders-poc"].map(s=><option key={s} value={s}>{s}</option>)}
+          {["idp-platform-ai","spring-orders-poc"].map(s=><option key={s} value={s}>{s}</option>)}
         </select>
         <Badge color="green">All stages passed</Badge>
       </div>
@@ -564,7 +564,7 @@ function GoldenThread(){
       </Card></div>
       <div className="s4"><Card><CardHeader left={`Deployment inventory · ${svc}`}/>
         <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-          {[["GitLab repo",`gitlab.com/zayo-group/devops/idp-platform/${svc}`],["ECR image",`501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/${svc}`],["Image tag","v1.0.0-latest"],["Helm chart","./helm/values-prod.yaml"],["K8s namespace",svc.includes("orders")?"orders":"platform-ai"],["ArgoCD app",svc]].map(([k,v])=>(
+          {[["GitLab repo",`gitlab.com/idp-group/devops/idp-platform/${svc}`],["ECR image",`123456789012.dkr.ecr.us-east-1.amazonaws.com/idp-poc/${svc}`],["Image tag","v1.0.0-latest"],["Helm chart","./helm/values-prod.yaml"],["K8s namespace",svc.includes("orders")?"orders":"platform-ai"],["ArgoCD app",svc]].map(([k,v])=>(
             <div key={k} style={{background:DS.bg4,borderRadius:DS.r8,padding:"10px 12px"}}>
               <div style={{fontSize:9.5,fontWeight:700,color:DS.t4,textTransform:"uppercase",letterSpacing:".08em",marginBottom:5}}>{k}</div>
               <div style={{fontSize:11,fontFamily:DS.mono,color:DS.ac,wordBreak:"break-all",lineHeight:1.5}}>{v}</div>
@@ -578,7 +578,7 @@ function GoldenThread(){
 
 function Insights(){
   const data=[
-    {s:"zayo-platform-ai",cicd:92,sec:88,obs:85,docs:70,dora:95,deps:90,ov:87},
+    {s:"idp-platform-ai",cicd:92,sec:88,obs:85,docs:70,dora:95,deps:90,ov:87},
     {s:"spring-orders-poc",cicd:88,sec:82,obs:79,docs:65,dora:88,deps:85,ov:81},
     {s:"auth-gateway",cicd:95,sec:91,obs:88,docs:80,dora:90,deps:87,ov:89},
     {s:"billing-service",cicd:55,sec:42,obs:60,docs:45,dora:50,deps:65,ov:53},
@@ -609,13 +609,13 @@ function Insights(){
 function Infra(){
   return(
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:14}}>
-      <div className="s1"><div style={{fontSize:20,fontWeight:700,color:DS.t1,letterSpacing:"-.04em",marginBottom:3}}>Infrastructure</div><div style={{fontSize:12.5,color:DS.t3}}>AWS us-east-1 · account 501149494381</div></div>
+      <div className="s1"><div style={{fontSize:20,fontWeight:700,color:DS.t1,letterSpacing:"-.04em",marginBottom:3}}>Infrastructure</div><div style={{fontSize:12.5,color:DS.t3}}>AWS us-east-1 · account 123456789012</div></div>
       <div className="s2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         {[
           {t:"EKS cluster",sub:"test-cluster-cicd-deployment",rows:[["Nodes","2x t3.medium"],["K8s","v1.34.2-eks"],["Region","us-east-1"],["Namespaces","platform-ai · orders · backstage · argocd"]]},
-          {t:"ECR repositories",sub:"Container registry",rows:[["zayo-poc/zayo-platform-ai","5 images"],["zayo-poc/spring-orders-poc","2 images"],["zayo-poc/backstage","12+ images"],["Auth","aws ecr get-login-password"]]},
-          {t:"AWS infrastructure",sub:"Terraform",rows:[["S3 state","zayo-poc-tf-state-501149494381-idp"],["DynamoDB","zayo-poc-tf-locks"],["OIDC","gitlab.com (exists)"],["Subnets","subnet-0d32dc7e · subnet-0ce39a84"]]},
-          {t:"GitLab CI/CD",sub:"Zayo GitLab group",rows:[["Group","zayo-group/devops/idp-platform"],["Pipelines","3 repos · all green"],["Runners","GitLab SaaS · Linux"],["Group vars","12 variables"]]},
+          {t:"ECR repositories",sub:"Container registry",rows:[["idp-poc/idp-platform-ai","5 images"],["idp-poc/spring-orders-poc","2 images"],["idp-poc/backstage","12+ images"],["Auth","aws ecr get-login-password"]]},
+          {t:"AWS infrastructure",sub:"Terraform",rows:[["S3 state","idp-poc-tf-state-123456789012-idp"],["DynamoDB","idp-poc-tf-locks"],["OIDC","gitlab.com (exists)"],["Subnets","subnet-0d32dc7e · subnet-0ce39a84"]]},
+          {t:"GitLab CI/CD",sub:"Idp GitLab group",rows:[["Group","idp-group/devops/idp-platform"],["Pipelines","3 repos · all green"],["Runners","GitLab SaaS · Linux"],["Group vars","12 variables"]]},
         ].map((c,i)=>(
           <Card key={i}>
             <div style={{padding:"12px 14px",borderBottom:`1px solid ${DS.b1}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>

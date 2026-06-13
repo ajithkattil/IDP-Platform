@@ -1,8 +1,8 @@
 # ============================================================
-# Zayo POC — Combined Platform Terraform
+# Idp POC — Combined Platform Terraform
 # Creates ONE shared EKS cluster used by both services:
 #   - spring-orders-poc  (namespace: orders)
-#   - zayo-platform-ai   (namespace: platform-ai)
+#   - idp-platform-ai   (namespace: platform-ai)
 #
 # Deploy order:
 #   1. terraform apply  → cluster + ECR repos + namespaces
@@ -21,16 +21,16 @@ terraform {
 }
 
 variable "aws_region"   { default = "us-east-1" }
-variable "cluster_name" { default = "zayo-poc-eks" }
+variable "cluster_name" { default = "idp-poc-eks" }
 variable "environment"  { default = "poc" }
 
 locals {
   tags = {
     Environment = var.environment
     ManagedBy   = "terraform"
-    Project     = "zayo-poc"
+    Project     = "idp-poc"
   }
-  services = ["zayo-platform-ai", "spring-orders-poc"]
+  services = ["idp-platform-ai", "spring-orders-poc"]
 }
 
 provider "aws" {
@@ -74,7 +74,7 @@ module "eks" {
   }
   eks_managed_node_groups = {
     shared = {
-      name           = "zayo-poc-nodes"
+      name           = "idp-poc-nodes"
       instance_types = ["t3.medium"]
       min_size       = 2
       max_size       = 4
@@ -88,7 +88,7 @@ module "eks" {
 # ── ECR — one repo per service ────────────────────────────────
 resource "aws_ecr_repository" "services" {
   for_each             = toset(local.services)
-  name                 = "zayo-poc/${each.key}"
+  name                 = "idp-poc/${each.key}"
   image_tag_mutability = "IMMUTABLE"
   image_scanning_configuration { scan_on_push = true }
   encryption_configuration    { encryption_type = "KMS" }
@@ -120,7 +120,7 @@ resource "aws_iam_role" "pod_roles" {
       Condition = {
         StringEquals = {
           "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" =
-            "system:serviceaccount:${each.key == "zayo-platform-ai" ? "platform-ai" : "orders"}:${each.key}"
+            "system:serviceaccount:${each.key == "idp-platform-ai" ? "platform-ai" : "orders"}:${each.key}"
         }
       }
     }]
@@ -136,7 +136,7 @@ resource "aws_iam_role_policy" "pod_secrets" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
-      Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:zayo/${each.key}/*"
+      Resource = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:idp/${each.key}/*"
     }]
   })
 }
@@ -188,7 +188,7 @@ resource "helm_release" "argocd" {
 
 # ── S3 for SBOMs ─────────────────────────────────────────────
 resource "aws_s3_bucket" "sboms" {
-  bucket = "zayo-poc-sboms-${data.aws_caller_identity.current.account_id}"
+  bucket = "idp-poc-sboms-${data.aws_caller_identity.current.account_id}"
 }
 resource "aws_s3_bucket_public_access_block" "sboms" {
   bucket                  = aws_s3_bucket.sboms.id

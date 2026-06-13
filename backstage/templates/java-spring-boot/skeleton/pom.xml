@@ -11,7 +11,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.zayo</groupId>
+  <groupId>com.idp</groupId>
   <artifactId>${{ values.service_name }}</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>${{ values.service_name }}</name>

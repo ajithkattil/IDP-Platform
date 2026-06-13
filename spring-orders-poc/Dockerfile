@@ -12,8 +12,8 @@ COPY src ./src
 RUN mvn package -DskipTests --no-transfer-progress -q
 
 FROM eclipse-temurin:17-jre-jammy AS runtime
-LABEL com.zayo.service="spring-orders-poc"
-LABEL com.zayo.team="orders-team"
+LABEL com.idp.service="spring-orders-poc"
+LABEL com.idp.team="orders-team"
 
 RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
 WORKDIR /app

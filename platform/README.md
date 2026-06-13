@@ -7,7 +7,7 @@
 
 ## What it does
 
-The infrastructure backbone of the Zayo IDP POC. Contains everything needed to provision and configure the AWS and Kubernetes infrastructure that all services run on.
+The infrastructure backbone of the Idp IDP POC. Contains everything needed to provision and configure the AWS and Kubernetes infrastructure that all services run on.
 
 ---
 
@@ -44,19 +44,19 @@ chmod +x bootstrap/bootstrap.sh
 
 | Resource | Name | Purpose |
 |----------|------|---------|
-| S3 Bucket | zayo-poc-tf-state-501149494381-idp | Terraform state storage |
-| DynamoDB Table | zayo-poc-tf-locks | Terraform state locking |
+| S3 Bucket | idp-poc-tf-state-123456789012-idp | Terraform state storage |
+| DynamoDB Table | idp-poc-tf-locks | Terraform state locking |
 | OIDC Provider | gitlab.com | GitLab CI → AWS auth (blocked by permission boundary) |
-| IAM Role | zayo-poc-gitlab-ci-role | Pipeline role (blocked by permission boundary) |
-| ECR Repo | zayo-poc/zayo-platform-ai | AI service images |
-| ECR Repo | zayo-poc/spring-orders-poc | Orders service images |
+| IAM Role | idp-poc-gitlab-ci-role | Pipeline role (blocked by permission boundary) |
+| ECR Repo | idp-poc/idp-platform-ai | AI service images |
+| ECR Repo | idp-poc/spring-orders-poc | Orders service images |
 
 ### Known issue — IAM role creation blocked
 
 The bootstrap script fails at step 4 (IAM role creation) because the AWS account has a permission boundary that blocks `iam:CreateRole`. The workaround is to use static SSO credentials in GitLab CI/CD variables instead of OIDC.
 
 **To fix permanently:** Ask AWS admin to either:
-- Create the `zayo-poc-gitlab-ci-role` IAM role manually, or
+- Create the `idp-poc-gitlab-ci-role` IAM role manually, or
 - Remove the `iam:CreateRole` restriction from the permission boundary
 
 ---
@@ -74,15 +74,15 @@ kubectl apply -f argocd/apps.yaml
 ArgoCD needs a GitLab PAT to pull Helm charts:
 
 ```bash
-# For zayo-platform-ai
-kubectl create secret generic argocd-repo-zayo-platform-ai \
+# For idp-platform-ai
+kubectl create secret generic argocd-repo-idp-platform-ai \
   -n argocd \
   --from-literal=type=git \
-  --from-literal=url=https://gitlab.com/cltajith/zayo-platform-ai.git \
+  --from-literal=url=https://gitlab.com/cltajith/idp-platform-ai.git \
   --from-literal=username=cltajith \
   --from-literal=password=glpat-...
 
-kubectl label secret argocd-repo-zayo-platform-ai \
+kubectl label secret argocd-repo-idp-platform-ai \
   -n argocd \
   "argocd.argoproj.io/secret-type=repository"
 
@@ -123,7 +123,7 @@ python3 scripts/cost-check.py --region us-east-1
 Fires a DORA deployment event to Datadog.
 ```bash
 python3 scripts/fire-datadog-event.py \
-  --service zayo-platform-ai \
+  --service idp-platform-ai \
   --env prod \
   --version v1.0.0-abc123 \
   --committed-at 1234567890 \
@@ -135,7 +135,7 @@ python3 scripts/fire-datadog-event.py \
 Writes an immutable deployment record to Postgres.
 ```bash
 python3 scripts/write-deployment-record.py \
-  --service zayo-platform-ai \
+  --service idp-platform-ai \
   --env prod \
   --version v1.0.0-abc123 \
   --git-sha abc123 \
@@ -177,9 +177,9 @@ kubectl apply -f argocd/apps.yaml
 kubectl delete namespace platform-ai orders argocd
 
 # Clean up ECR images (optional)
-aws ecr list-images --repository-name zayo-poc/zayo-platform-ai --region us-east-1
-aws ecr batch-delete-image --repository-name zayo-poc/zayo-platform-ai --region us-east-1 --image-ids ...
+aws ecr list-images --repository-name idp-poc/idp-platform-ai --region us-east-1
+aws ecr batch-delete-image --repository-name idp-poc/idp-platform-ai --region us-east-1 --image-ids ...
 
 # Clean up S3 state bucket (optional)
-aws s3 rb s3://zayo-poc-tf-state-501149494381-idp --force
+aws s3 rb s3://idp-poc-tf-state-123456789012-idp --force
 ```

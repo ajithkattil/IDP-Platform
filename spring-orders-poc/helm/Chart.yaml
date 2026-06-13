@@ -1,6 +1,6 @@
 apiVersion: v2
 name: spring-orders-poc
-description: Zayo Orders Service — POC golden pipeline demo
+description: Idp Orders Service — POC golden pipeline demo
 type: application
 version: 1.0.0
 appVersion: "1.0.0"

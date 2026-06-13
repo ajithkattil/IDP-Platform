@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: zayo-devportal
+  name: idp-devportal
   namespace: devportal
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: zayo-devportal
+      app: idp-devportal
   template:
     metadata:
       labels:
-        app: zayo-devportal
+        app: idp-devportal
     spec:
       imagePullSecrets:
         - name: ecr-pull-secret
       containers:
-        - name: zayo-devportal
+        - name: idp-devportal
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: 80
@@ -32,12 +32,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: zayo-devportal
+  name: idp-devportal
   namespace: devportal
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: zayo-devportal
+    app: idp-devportal
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 80

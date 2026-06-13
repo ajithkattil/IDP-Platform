@@ -5,7 +5,7 @@ metadata:
   title: ${{ values.service_name }}
   description: ${{ values.description }}
   annotations:
-    gitlab.com/project-slug: "zayo-group/devops/idp-platform/${{ values.service_name }}"
+    gitlab.com/project-slug: "idp-group/devops/idp-platform/${{ values.service_name }}"
     argocd/app-name: "${{ values.service_name }}"
   tags:
     - java

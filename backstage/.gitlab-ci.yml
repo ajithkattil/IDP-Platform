@@ -2,7 +2,7 @@ variables:
   AWS_REGION: "us-east-1"
   SERVICE_NAME: "backstage"
   ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-  ECR_REPO: "zayo-poc/backstage"
+  ECR_REPO: "idp-poc/backstage"
   IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
   FULL_IMAGE: "${ECR_REGISTRY}/${ECR_REPO}:v1.0.0-${IMAGE_TAG}"
 

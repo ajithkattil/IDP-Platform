@@ -1,19 +1,19 @@
 ---
 # Deploy order: apply this file FIRST
-# zayo-platform-ai must be live before spring-orders-poc
+# idp-platform-ai must be live before spring-orders-poc
 # pipeline calls it for SAST explanation
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: zayo-platform-ai
+  name: idp-platform-ai
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"   # deploys first
-    zayo.com/catalog-entity: "component:default/zayo-platform-ai"
+    idp.com/catalog-entity: "component:default/idp-platform-ai"
 spec:
   project: default
   source:
-    repoURL: "https://gitlab.com/zayo/platform/zayo-platform-ai.git"
+    repoURL: "https://gitlab.com/idp/platform/idp-platform-ai.git"
     targetRevision: main
     path: helm
     helm:
@@ -28,7 +28,7 @@ spec:
 
 ---
 # Deploy order: apply this file SECOND
-# Depends on zayo-platform-ai being healthy
+# Depends on idp-platform-ai being healthy
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -36,11 +36,11 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"   # deploys second
-    zayo.com/catalog-entity: "component:default/spring-orders-poc"
+    idp.com/catalog-entity: "component:default/spring-orders-poc"
 spec:
   project: default
   source:
-    repoURL: "https://gitlab.com/zayo/orders/spring-orders-poc.git"
+    repoURL: "https://gitlab.com/idp/orders/spring-orders-poc.git"
     targetRevision: main
     path: helm
     helm:

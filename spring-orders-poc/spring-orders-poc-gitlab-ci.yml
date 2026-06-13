@@ -3,11 +3,11 @@ variables:
   SERVICE_NAME: "spring-orders-poc"
   HELM_CHART_PATH: "helm"
   ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-  ECR_REPO: "zayo-poc/${SERVICE_NAME}"
+  ECR_REPO: "idp-poc/${SERVICE_NAME}"
   IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
   FULL_IMAGE: "${ECR_REGISTRY}/${ECR_REPO}:v1.0.0-${IMAGE_TAG}"
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
-  AI_SERVICE_URL: "http://zayo-platform-ai.platform-ai.svc.cluster.local:8000"
+  AI_SERVICE_URL: "http://idp-platform-ai.platform-ai.svc.cluster.local:8000"
 
 stages:
   - lint

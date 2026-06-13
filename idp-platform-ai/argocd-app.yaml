@@ -1,0 +1,51 @@
+---
+# ============================================================
+# ArgoCD Application — idp-platform-ai
+# Watches helm/values-prod.yaml. CI updates image.tag.
+# ArgoCD syncs automatically within 3 minutes of the push.
+# ============================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idp-platform-ai
+  namespace: argocd
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    idp.com/service: idp-platform-ai
+    idp.com/team: platform-engineering
+    idp.com/tier: "1"
+  annotations:
+    idp.com/catalog-entity: "component:default/idp-platform-ai"
+    idp.com/jira-project: "ZSP"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  project: default
+
+  source:
+    repoURL: "https://gitlab.com/cltajith/idp-platform-ai.git"
+    targetRevision: main
+    path: helm
+    helm:
+      valueFiles:
+        - values-prod.yaml
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: platform-ai
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true        # corrects any console-made changes
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 3m
