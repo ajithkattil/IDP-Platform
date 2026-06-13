@@ -1,0 +1,46 @@
+variables:
+  AWS_REGION: "us-east-1"
+  SERVICE_NAME: "backstage"
+  ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+  ECR_REPO: "zayo-poc/backstage"
+  IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
+  FULL_IMAGE: "${ECR_REGISTRY}/${ECR_REPO}:v1.0.0-${IMAGE_TAG}"
+
+stages:
+  - build
+  - push
+
+docker-build:
+  stage: build
+  image: node:20-bookworm
+  script:
+    - apt-get update -qq && apt-get install -y python3 g++ build-essential libsqlite3-dev cmake --quiet 2>/dev/null
+    - yarn install --immutable --inline-builds 2>&1 | grep -v "^$" || true
+    - yarn tsc
+    - yarn build:backend
+  artifacts:
+    paths:
+      - packages/backend/dist/
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+ecr-push:
+  stage: push
+  image: python:3.11-slim
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "/certs/client"
+  script:
+    - apt-get update -qq && apt-get install -y docker-cli --quiet 2>/dev/null
+    - pip install awscli --quiet
+    - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+    - docker build -f packages/backend/Dockerfile -t ${FULL_IMAGE} .
+    - docker push ${FULL_IMAGE}
+    - echo "Pushed ${FULL_IMAGE}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

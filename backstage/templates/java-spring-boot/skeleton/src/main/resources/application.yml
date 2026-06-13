@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: ${{ values.service_name }}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+info:
+  app:
+    name: ${{ values.service_name }}
+    description: ${{ values.description }}
+    owner: ${{ values.owner_team }}
+    version: 1.0.0

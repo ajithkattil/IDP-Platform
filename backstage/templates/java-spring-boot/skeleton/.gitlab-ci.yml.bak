@@ -1,0 +1,100 @@
+stages:
+  - lint
+  - sast
+  - test
+  - build
+  - ecr-push
+  - terraform
+  - deploy
+
+variables:
+  SERVICE_NAME: "${{ values.service_name }}"
+  ECR_REGISTRY: "501149494381.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPO: "zayo-poc/${{ values.service_name }}"
+  AWS_REGION: "us-east-1"
+  AWS_DEFAULT_REGION: "us-east-1"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+lint:
+  stage: lint
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn checkstyle:check -q
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+sast:
+  stage: sast
+  image: returntocorp/semgrep:latest
+  script:
+    - semgrep --config=auto --severity=ERROR src/ || true
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn test -q
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn package -DskipTests -q
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+ecr-push:
+  stage: ecr-push
+  image: python:3.11-slim
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq docker.io awscli
+  script:
+    - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+    - docker build -t $ECR_REGISTRY/$ECR_REPO:v1.0.0-$CI_COMMIT_SHORT_SHA -t $ECR_REGISTRY/$ECR_REPO:latest .
+    - docker push $ECR_REGISTRY/$ECR_REPO:v1.0.0-$CI_COMMIT_SHORT_SHA
+    - docker push $ECR_REGISTRY/$ECR_REPO:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+terraform:
+  stage: terraform
+  image: hashicorp/terraform:1.7
+  before_script:
+    - apk add --no-cache aws-cli curl
+    - aws --version
+  script:
+    - cd terraform
+    - terraform init
+    - terraform plan -out=tfplan
+    - terraform apply -auto-approve tfplan
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+      allow_failure: true
+
+deploy:
+  stage: deploy
+  image: alpine:3.19
+  script:
+    - echo "Deployed v1.0.0-${CI_COMMIT_SHORT_SHA}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success

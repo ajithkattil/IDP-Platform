@@ -1,0 +1,8 @@
+apiVersion: v2
+name: ${{ values.service_name }}
+description: ${{ values.description }}
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: ${{ values.owner_team }}

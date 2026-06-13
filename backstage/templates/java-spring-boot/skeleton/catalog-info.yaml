@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.service_name }}
+  title: ${{ values.service_name }}
+  description: ${{ values.description }}
+  annotations:
+    gitlab.com/project-slug: "zayo-group/devops/idp-platform/${{ values.service_name }}"
+    argocd/app-name: "${{ values.service_name }}"
+  tags:
+    - java
+    - spring-boot
+    - eks
+    - golden-path
+spec:
+  type: service
+  lifecycle: development
+  owner: "group:${{ values.owner_team }}"
+  system: "${{ values.system_name }}"

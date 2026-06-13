@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/backstage
+  tag: "v1.0.0-df7db0ff"
+  pullPolicy: IfNotPresent
+
+namespace: backstage
+
+service:
+  type: NodePort
+  port: 7007
+  targetPort: 7007
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 7007
+  initialDelaySeconds: 60
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 7007
+  initialDelaySeconds: 30
+  periodSeconds: 10
