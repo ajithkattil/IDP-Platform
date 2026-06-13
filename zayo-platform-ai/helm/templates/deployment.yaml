@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+    version: {{ .Values.image.tag | quote }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Values.image.tag | quote }}
+    app.kubernetes.io/managed-by: argocd
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        version: {{ .Values.image.tag | quote }}
+        tags.datadoghq.com/service: {{ .Values.datadog.service | quote }}
+        tags.datadoghq.com/env: {{ .Values.datadog.env | quote }}
+        tags.datadoghq.com/version: {{ .Values.image.tag | quote }}
+      annotations:
+        ad.datadoghq.com/{{ .Release.Name }}.logs: |
+          [{"source": "python", "service": "{{ .Values.datadog.service }}"}]
+    spec:
+      serviceAccountName: {{ .Release.Name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            # Datadog APM — set from Helm values
+            - name: DD_SERVICE
+              value: {{ .Values.datadog.service | quote }}
+            - name: DD_ENV
+              value: {{ .Values.datadog.env | quote }}
+            - name: DD_VERSION
+              value: {{ .Values.image.tag | quote }}
+            - name: DD_LOGS_INJECTION
+              value: {{ .Values.datadog.logsInjection | quote }}
+            - name: DD_PROFILING_ENABLED
+              value: {{ .Values.datadog.profiling | quote }}
+            # Secrets from AWS Secrets Manager via external-secrets-operator
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: anthropic-api-key
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: database-url
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: datadog-api-key
+            # Service identity
+            - name: ENVIRONMENT
+              value: {{ .Values.datadog.env | quote }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}

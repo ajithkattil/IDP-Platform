@@ -1,0 +1,62 @@
+# ============================================================
+# eksctl cluster config — zayo-platform-ai POC
+# Cost-optimised: t3.medium × 2, single-AZ, ephemeral
+#
+# Usage (manual):
+#   eksctl create cluster -f eksctl-cluster.yaml
+#   eksctl delete cluster -f eksctl-cluster.yaml
+#
+# In CI: the pipeline inlines eksctl flags directly so it can
+# inject CI_PIPELINE_ID into the cluster name dynamically.
+# Use this file for local testing or one-off cluster creation.
+# ============================================================
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: zayo-poc-local        # override with --name in CI
+  region: us-east-1
+  version: "1.30"
+  tags:
+    purpose: ci-test
+    auto-delete: "true"
+    managed-by: eksctl
+
+# ── IAM OIDC (required for IRSA — pods assume IAM roles) ─────
+iam:
+  withOIDC: true
+
+# ── Node group — 2 × t3.medium ───────────────────────────────
+# t3.medium: 2 vCPU, 4GB RAM, $0.0416/hr
+# 2 nodes × $0.0416/hr × 0.5hr = $0.042
+managedNodeGroups:
+  - name: workers
+    instanceType: t3.medium
+    minSize: 2
+    maxSize: 2
+    desiredCapacity: 2
+    volumeSize: 20
+    volumeType: gp3
+    privateNetworking: true      # nodes in private subnets
+    labels:
+      purpose: ci-test
+    tags:
+      auto-delete: "true"
+    iam:
+      withAddonPolicies:
+        ebs: true                # needed for EBS CSI driver
+        albIngress: true         # needed if using ALB ingress
+
+# ── Add-ons ───────────────────────────────────────────────────
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+
+# ── Logging — minimal to reduce cost ─────────────────────────
+cloudWatch:
+  clusterLogging:
+    enableTypes: []    # disable all CloudWatch logging — saves ~$0.50/run

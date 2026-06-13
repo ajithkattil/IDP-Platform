@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: zayo-devportal
+  title: Zayo Developer Portal
+  description: Production-grade internal developer portal for Zayo. React frontend with live Backstage API, AI copilot via Claude Sonnet 4, DORA metrics, service catalog, and golden thread visualization.
+  annotations:
+    gitlab.com/project-slug: "zayo-group/devops/idp-platform/zayo-devportal"
+    argocd/app-name: "zayo-devportal"
+  tags: [react, vite, typescript, eks, tier-1, platform, idp]
+spec:
+  type: website
+  lifecycle: production
+  owner: "group:platform-engineering"
+  system: "developer-platform"
+  domain: "platform"

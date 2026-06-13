@@ -1,0 +1,17 @@
+# Runtime dependencies
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+pydantic-settings==2.4.0
+anthropic==0.34.2
+structlog==24.4.0
+httpx==0.27.2
+#####
+# Data bridge dependencies
+asyncpg==0.29.0           # Deployment Record DB (async PostgreSQL)
+kubernetes==31.0.0         # EKS pod status
+boto3==1.35.0              # AWS SDK (EKS token, Secrets Manager)
+sqlalchemy[asyncio]==2.0.35
+
+# Datadog tracing (baked into Docker image)
+ddtrace==2.11.3

@@ -1,0 +1,16 @@
+replicaCount: 1
+image:
+  repository: 501149494381.dkr.ecr.us-east-1.amazonaws.com/zayo-poc/zayo-devportal
+  tag: "v1.0.0-84751ea3"
+  pullPolicy: Always
+service:
+  type: NodePort
+  port: 80
+  nodePort: 31394
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

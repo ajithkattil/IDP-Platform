@@ -1,0 +1,7 @@
+service_name   = "preflight-curl-1"
+owner_team     = "platform"
+description    = "Preflight curl test from scaffolder API"
+environment    = "dev"
+aws_account_id = "501149494381"
+cluster_name   = "eks-test-cluster"
+gitlab_group   = "zayo-group/devops/idp-platform"

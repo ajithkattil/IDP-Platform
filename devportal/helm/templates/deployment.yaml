@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zayo-devportal
+  namespace: devportal
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: zayo-devportal
+  template:
+    metadata:
+      labels:
+        app: zayo-devportal
+    spec:
+      imagePullSecrets:
+        - name: ecr-pull-secret
+      containers:
+        - name: zayo-devportal
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 80
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zayo-devportal
+  namespace: devportal
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: zayo-devportal
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 80
+      nodePort: {{ .Values.service.nodePort }}
